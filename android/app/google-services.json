@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "722347011760",
+    "project_id": "gestionale-ordini-1913d",
+    "storage_bucket": "gestionale-ordini-1913d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:722347011760:android:eae2bedf4038a7e63e9575",
+        "android_client_info": {
+          "package_name": "com.anonymous.GestionaleOrdini"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBxqaFeX7D5HIAtWu9RADrTTP8WKt5eyGo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
