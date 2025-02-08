@@ -12,8 +12,6 @@ import { db } from "../config/firebaseConfig";
 import Toast from "react-native-toast-message";
 import { Picker } from "@react-native-picker/picker"; // ✅ Import corretto
 
-
-
 const NewOrderScreen = ({ navigation }) => {
   const [clienti, setClienti] = useState([]);
   const [prodotti, setProdotti] = useState([]);
@@ -31,7 +29,11 @@ const NewOrderScreen = ({ navigation }) => {
         setProdotti(prodottiSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       } catch (error) {
         console.error("Errore nel caricamento:", error);
-        Toast.show({ type: "error", text1: "Errore", text2: "Impossibile caricare i dati." });
+        Toast.show({
+          type: "error",
+          text1: "Errore",
+          text2: "Impossibile caricare i dati.",
+        });
       } finally {
         setLoading(false);
       }
@@ -49,7 +51,11 @@ const NewOrderScreen = ({ navigation }) => {
 
   const handleSubmitOrder = async () => {
     if (!clienteSelezionato || Object.keys(prodottiSelezionati).length === 0) {
-      Toast.show({ type: "error", text1: "Errore", text2: "Seleziona un cliente e almeno un prodotto." });
+      Toast.show({
+        type: "error",
+        text1: "Errore",
+        text2: "Seleziona un cliente e almeno un prodotto.",
+      });
       return;
     }
 
@@ -73,11 +79,19 @@ const NewOrderScreen = ({ navigation }) => {
         stato: "In attesa",
       });
 
-      Toast.show({ type: "success", text1: "✅ Ordine creato!", text2: "L'ordine è stato aggiunto con successo." });
+      Toast.show({
+        type: "success",
+        text1: "✅ Ordine creato!",
+        text2: "L'ordine è stato aggiunto con successo.",
+      });
       navigation.goBack();
     } catch (error) {
       console.error("Errore nella creazione dell'ordine:", error);
-      Toast.show({ type: "error", text1: "Errore", text2: "Impossibile salvare l'ordine." });
+      Toast.show({
+        type: "error",
+        text1: "Errore",
+        text2: "Impossibile salvare l'ordine.",
+      });
     }
   };
 
@@ -95,7 +109,11 @@ const NewOrderScreen = ({ navigation }) => {
       <Text style={styles.titolo}>🆕 Crea Nuovo Ordine</Text>
 
       <Text style={styles.label}>👤 Seleziona Cliente:</Text>
-      <Picker selectedValue={clienteSelezionato} onValueChange={(val) => setClienteSelezionato(val)} style={styles.picker}>
+      <Picker
+        selectedValue={clienteSelezionato}
+        onValueChange={(val) => setClienteSelezionato(val)}
+        style={styles.picker}
+      >
         <Picker.Item label="-- Scegli un Cliente --" value={null} />
         {clienti.map((cliente) => (
           <Picker.Item key={cliente.id} label={cliente.nome} value={cliente} />
@@ -107,8 +125,13 @@ const NewOrderScreen = ({ navigation }) => {
         data={prodotti}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.prodottoItem} onPress={() => handleToggleProduct(item.id)}>
-            <Text>{item.nome} - €{item.prezzo.toFixed(2)}</Text>
+          <TouchableOpacity
+            style={styles.prodottoItem}
+            onPress={() => handleToggleProduct(item.id)}
+          >
+            <Text>
+              {item.nome} - €{item.prezzo.toFixed(2)}
+            </Text>
             <Text>Quantità: {prodottiSelezionati[item.id] || 0}</Text>
           </TouchableOpacity>
         )}
@@ -129,9 +152,19 @@ export default NewOrderScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: "#f8f8f8" },
-  titolo: { fontSize: 22, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
+  titolo: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
   label: { fontSize: 16, fontWeight: "bold", marginBottom: 5 },
-  picker: { height: 50, backgroundColor: "#fff", borderRadius: 5, marginBottom: 10 },
+  picker: {
+    height: 50,
+    backgroundColor: "#fff",
+    borderRadius: 5,
+    marginBottom: 10,
+  },
   prodottoItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -140,7 +173,19 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     borderRadius: 5,
   },
-  bottone: { backgroundColor: "#007AFF", padding: 15, borderRadius: 8, alignItems: "center", marginTop: 10 },
-  bottoneIndietro: { backgroundColor: "#34C759", padding: 15, borderRadius: 8, alignItems: "center", marginTop: 10 },
+  bottone: {
+    backgroundColor: "#007AFF",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  bottoneIndietro: {
+    backgroundColor: "#34C759",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+  },
   testoBottone: { color: "white", fontSize: 18, fontWeight: "bold" },
 });

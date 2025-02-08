@@ -91,7 +91,10 @@ const HomeScreen = ({ navigation }) => {
         />
       )}
 
-      <TouchableOpacity style={styles.bottoneNuovo} onPress={() => navigation.navigate("NuovoOrdine")}>
+      <TouchableOpacity
+        style={styles.bottoneNuovo}
+        onPress={() => navigation.navigate("NuovoOrdine")}
+      >
         <Text style={styles.testoBottone}>➕ Nuovo Ordine</Text>
       </TouchableOpacity>
     </View>
@@ -103,12 +106,41 @@ export default HomeScreen;
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: "#f8f8f8" },
   titolo: { fontSize: 22, fontWeight: "bold", marginBottom: 10 },
-  ordine: { padding: 15, backgroundColor: "white", borderRadius: 8, marginVertical: 5 },
+  ordine: {
+    padding: 15,
+    backgroundColor: "white",
+    borderRadius: 8,
+    marginVertical: 5,
+  },
   cliente: { fontSize: 18, fontWeight: "bold" },
   totale: { fontSize: 16, fontWeight: "bold", marginTop: 5, color: "#007AFF" },
-  bottoniContainer: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
-  bottoneModifica: { backgroundColor: "#007AFF", padding: 10, borderRadius: 5, flex: 1, alignItems: "center", marginRight: 5 },
-  bottoneElimina: { backgroundColor: "#FF3B30", padding: 10, borderRadius: 5, flex: 1, alignItems: "center", marginLeft: 5 },
+  bottoniContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  bottoneModifica: {
+    backgroundColor: "#007AFF",
+    padding: 10,
+    borderRadius: 5,
+    flex: 1,
+    alignItems: "center",
+    marginRight: 5,
+  },
+  bottoneElimina: {
+    backgroundColor: "#FF3B30",
+    padding: 10,
+    borderRadius: 5,
+    flex: 1,
+    alignItems: "center",
+    marginLeft: 5,
+  },
   testoBottone: { color: "white", fontSize: 16, fontWeight: "bold" },
-  bottoneNuovo: { marginTop: 20, backgroundColor: "#34C759", padding: 15, borderRadius: 8, alignItems: "center" },
+  bottoneNuovo: {
+    marginTop: 20,
+    backgroundColor: "#34C759",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+  },
 });

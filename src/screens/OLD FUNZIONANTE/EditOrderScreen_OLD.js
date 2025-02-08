@@ -92,7 +92,9 @@ const EditOrderScreen = ({ route, navigation }) => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.prodottoItem}>
-            <Text>{item.nome} - {item.quantita}x</Text>
+            <Text>
+              {item.nome} - {item.quantita}x
+            </Text>
             <Text>💰 €{(item.prezzo_unitario * item.quantita).toFixed(2)}</Text>
           </View>
         )}
@@ -121,10 +123,26 @@ export default EditOrderScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: "#f8f8f8" },
-  titolo: { fontSize: 22, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
+  titolo: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
   label: { fontSize: 16, fontWeight: "bold", marginBottom: 5 },
-  info: { fontSize: 16, backgroundColor: "#fff", padding: 10, borderRadius: 5, marginBottom: 10 },
-  picker: { height: 50, backgroundColor: "#fff", borderRadius: 5, marginBottom: 10 },
+  info: {
+    fontSize: 16,
+    backgroundColor: "#fff",
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  picker: {
+    height: 50,
+    backgroundColor: "#fff",
+    borderRadius: 5,
+    marginBottom: 10,
+  },
   prodottoItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -133,7 +151,19 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     borderRadius: 5,
   },
-  bottone: { backgroundColor: "#007AFF", padding: 15, borderRadius: 8, alignItems: "center", marginTop: 10 },
-  bottoneIndietro: { backgroundColor: "#34C759", padding: 15, borderRadius: 8, alignItems: "center", marginTop: 10 },
+  bottone: {
+    backgroundColor: "#007AFF",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  bottoneIndietro: {
+    backgroundColor: "#34C759",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+  },
   testoBottone: { color: "white", fontSize: 18, fontWeight: "bold" },
 });

@@ -7,7 +7,7 @@ const firebaseConfig = {
   projectId: "gestionale-ordini-1913d",
   storageBucket: "gestionale-ordini-1913d.firebasestorage.app",
   messagingSenderId: "722347011760",
-  appId: "1:722347011760:android:eae2bedf4038a7e63e9575"
+  appId: "1:722347011760:android:eae2bedf4038a7e63e9575",
 };
 
 // Inizializza Firebase
