@@ -40,7 +40,7 @@ const ClientsScreen = () => {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true); // Controlla la visibilità della barra filtri
   const headerTranslateY = scrollY.interpolate({
     inputRange: [0, 100],  // Dopo 100px di scroll verso il basso la barra scompare
-    outputRange: [0, -120], // La barra viene traslata verso l'alto di 120px
+    outputRange: [0, -120], // La barra viene traslata verso l'alto di  120px
     extrapolate: "clamp", // Impedisce che il valore esca fuori dai limiti
   });
 
@@ -146,122 +146,20 @@ const ClientsScreen = () => {
     const vatRegex = /^\d{11}$/;
     return vatRegex.test(vatNumber);
   };
-  // Funzione per modificare un cliente
-  const handleSaveChanges = async () => {
-    if (!selectedClient) return;
 
-    const trimmedClient = {
-      ...selectedClient,
-      name: selectedClient.name.trim(),
-      surname: selectedClient.surname.trim(),
-      businessName: selectedClient.businessName.trim(),
-      companyName: selectedClient.companyName.trim(),
-      vatNumber: selectedClient.vatNumber.trim(),
-      email: selectedClient.email.trim().toLowerCase(), // Convertiamo in minuscolo per evitare duplicati falsi
-      phone: selectedClient.phone.trim(),
-      address: selectedClient.address.trim(),
-      pec: selectedClient.pec.trim().toLowerCase(),
-      sedeLegale: selectedClient.sedeLegale.trim(),
-    };
+  const [errorFields, setErrorFields] = useState([]);
 
-    const openEditModal = (client) => {
-      setSelectedClient(client);
-      setModalVisible(true);
-
-      setTimeout(() => {
-        if (editNameInputRef.current) {
-          editNameInputRef.current.focus();
-        }
-      }, 100);
-    };
-
-
-    // Controlla che tutti i campi obbligatori siano compilati
-    if (!trimmedClient.name || !trimmedClient.surname || !trimmedClient.businessName || !trimmedClient.email || !trimmedClient.phone || !trimmedClient.pec) {
-      showErrorPopup("Tutti i campi obbligatori devono essere compilati.");
-      return;
-    }
-
-    // Controlla se l'email è valida
-    if (!isValidEmail(trimmedClient.email)) {
-      showErrorPopup("L'email inserita non è valida.");
-      return;
-    }
-
-    // Controllo PEC
-    if (trimmedClient.pec && !isValidPEC(trimmedClient.pec)) {
-      showErrorPopup("La PEC inserita non è valida.");
-      return;
-    }
-
-    // Controlla se il telefono è valido
-    if (!isValidPhone(trimmedClient.phone)) {
-      showErrorPopup("Il numero di telefono deve contenere solo numeri e il simbolo +.");
-      return;
-    }
-
-    // Controlla se la Partita IVA è valida (solo se inserita)
-    if (trimmedClient.vatNumber && !isValidVAT(trimmedClient.vatNumber)) {
-      showErrorPopup("La Partita IVA deve contenere esattamente 11 cifre numeriche.");
-      return;
-    }
-
-    if (trimmedClient.vatNumber) {
-      trimmedClient.vatNumber = Number(trimmedClient.vatNumber);
-    }
-
-    try {
-      // **1️⃣ Controllo se l'email o la PEC esistono già nel database (escludendo il cliente attuale)**
-      const clientsRef = collection(db, "clients");
-
-      const querySnapshot = await getDocs(clientsRef);
-      const existingClient = querySnapshot.docs.find(doc => {
-        const data = doc.data();
-        return (
-          (data.email.toLowerCase() === trimmedClient.email.toLowerCase() ||
-            (trimmedClient.pec && data.pec.toLowerCase() === trimmedClient.pec.toLowerCase())) &&
-          doc.id !== trimmedClient.id
-        );
-      });
-
-      if (existingClient) {
-        if (existingClient.data().email.toLowerCase() === trimmedClient.email.toLowerCase()) {
-          showErrorPopup("❌ L'email inserita è già in uso da un altro cliente.");
-        } else {
-          showErrorPopup("❌ La PEC inserita è già in uso da un altro cliente.");
-        }
-        return;
-      }
-
-      // **2️⃣ Se i controlli sono superati, aggiorna il cliente**
-      const clientRef = doc(db, "clients", trimmedClient.id);
-      await updateDoc(clientRef, { ...trimmedClient });
-
-      // **3️⃣ Aggiorna lo stato dell'applicazione**
-      setClients(clients.map((client) =>
-        client.id === trimmedClient.id ? trimmedClient : client
-      ));
-
-      setModalVisible(false);
-
-      // ✅ **Mostra la notifica di successo**
-      showSuccessPopup("✅ Cliente modificato con successo! 🎉");
-
-    } catch (error) {
-      console.error("❌ Errore durante la modifica:", error);
-      showErrorPopup("⚠️ Si è verificato un errore durante la modifica. Riprova.");
-    }
-
-  };
   // Funzione per aggiungere un nuovo cliente
   const handleAddClient = async () => {
+    setErrorFields([]); // Resetta gli errori all'inizio della funzione
+
     const trimmedClient = {
       name: newClient.name.trim(),
       surname: newClient.surname.trim(),
       businessName: newClient.businessName.trim(),
       companyName: newClient.companyName.trim(),
       vatNumber: newClient.vatNumber.trim(),
-      email: newClient.email.trim().toLowerCase(), // Convertiamo in minuscolo per coerenza
+      email: newClient.email.trim().toLowerCase(),
       phone: newClient.phone.trim(),
       address: newClient.address.trim(),
       createdAt: new Date().toISOString(),
@@ -269,58 +167,56 @@ const ClientsScreen = () => {
       sedeLegale: newClient.sedeLegale.trim(),
     };
 
+    let errors = [];
 
-
-
-
-    const openAddModal = () => {
-      setAddModalVisible(true);
-
-      // Aspetta un attimo e poi imposta il focus sul campo Nome
-      setTimeout(() => {
-        if (nameInputRef.current) {
-          nameInputRef.current.focus();
-        }
-      }, 100);
-    };
-
-
-    // Controlla che tutti i campi obbligatori siano compilati
-    if (!trimmedClient.name || !trimmedClient.surname || !trimmedClient.businessName || !trimmedClient.email || !trimmedClient.phone || !trimmedClient.pec) {
-      showErrorPopup("Tutti i campi obbligatori devono essere compilati.");
-      return;
+    if (!trimmedClient.name) {
+      errors.push("name");
+      showErrorPopup("⚠️ Il nome è obbligatorio.");
+    }
+    if (!trimmedClient.surname) {
+      errors.push("surname");
+      showErrorPopup("⚠️ Il cognome è obbligatorio.");
+    }
+    if (!trimmedClient.businessName) {
+      errors.push("businessName");
+      showErrorPopup("⚠️ Il nome dell'attività è obbligatorio.");
+    }
+    if (!trimmedClient.email) {
+      errors.push("email");
+      showErrorPopup("⚠️ L'email è obbligatoria.");
+    } else if (!isValidEmail(trimmedClient.email)) {
+      errors.push("email");
+      showErrorPopup("⚠️ L'email inserita non è valida.");
     }
 
-    // Controlla se l'email è valida
-    if (!isValidEmail(trimmedClient.email)) {
-      showErrorPopup("L'email inserita non è valida.");
-      return;
+    if (!trimmedClient.phone) {
+      errors.push("phone");
+      showErrorPopup("⚠️ Il numero di telefono è obbligatorio.");
+    } else if (!isValidPhone(trimmedClient.phone)) {
+      errors.push("phone");
+      showErrorPopup("⚠️ Il numero di telefono deve contenere solo numeri e il simbolo +.");
     }
 
-    // Controllo se la PEC è valida
-    if (trimmedClient.pec && !isValidPEC(trimmedClient.pec)) {
-      showErrorPopup("La PEC inserita non è valida.");
-      return;
+    if (!trimmedClient.pec) {
+      errors.push("pec");
+      showErrorPopup("⚠️ La PEC è obbligatoria.");
+    } else if (!isValidPEC(trimmedClient.pec)) {
+      errors.push("pec");
+      showErrorPopup("⚠️ La PEC inserita non è valida.");
     }
 
-    // Controlla se il telefono è valido
-    if (!isValidPhone(trimmedClient.phone)) {
-      showErrorPopup("Il numero di telefono deve contenere solo numeri e il simbolo +.");
-      return;
-    }
-
-    // Controlla se la Partita IVA è valida (solo se inserita)
     if (trimmedClient.vatNumber && !isValidVAT(trimmedClient.vatNumber)) {
-      showErrorPopup("La Partita IVA deve contenere esattamente 11 cifre numeriche.");
-      return;
+      errors.push("vatNumber");
+      showErrorPopup("⚠️ La Partita IVA deve contenere esattamente 11 cifre numeriche.");
     }
 
-    if (trimmedClient.vatNumber) {
-      trimmedClient.vatNumber = Number(trimmedClient.vatNumber);
+    if (errors.length > 0) {
+      setErrorFields(errors);
+      return;
     }
 
     try {
-      // **1️⃣ Controlla se esiste già un cliente con la stessa email o PEC**
+      // 🔹 **Controllo se l'email o la PEC esistono già**
       const clientsRef = collection(db, "clients");
       const querySnapshot = await getDocs(clientsRef);
 
@@ -334,21 +230,17 @@ const ClientsScreen = () => {
 
       if (existingClient) {
         if (existingClient.data().email.toLowerCase() === trimmedClient.email.toLowerCase()) {
-          showErrorPopup("❌ L'email inserita è già in uso da un altro cliente.");
+          showErrorPopup("⚠️ L'email inserita è già in uso da un altro cliente.");
         } else {
-          showErrorPopup("❌ La PEC inserita è già in uso da un altro cliente.");
+          showErrorPopup("⚠️ La PEC inserita è già in uso da un altro cliente.");
         }
         return;
       }
 
-      // **2️⃣ Se i controlli sono superati, aggiungi il cliente**
+      // ✅ Se tutto è ok, aggiunge il cliente
       const docRef = await addDoc(clientsRef, trimmedClient);
-
-      // **3️⃣ Aggiorna lo stato dell'applicazione**
       setClients([...clients, { id: docRef.id, ...trimmedClient }]);
       setAddModalVisible(false);
-
-      // **4️⃣ Resetta i campi del nuovo cliente**
       setNewClient({
         name: "",
         surname: "",
@@ -362,15 +254,124 @@ const ClientsScreen = () => {
         sedeLegale: ""
       });
 
-      // ✅ **Mostra la notifica di successo**
-      showSuccessPopup("✅ Cliente aggiunto con successo! 🎉");
-
+      showSuccessPopup("✅ Cliente aggiunto con successo!");
     } catch (error) {
       console.error("❌ Errore durante l'aggiunta:", error);
       showErrorPopup("⚠️ Si è verificato un errore durante l'aggiunta. Riprova.");
     }
-
   };
+
+
+
+  // Funzione per modificare un cliente
+  const handleSaveChanges = async () => {
+    setErrorFields([]); // Resetta gli errori all'inizio della funzione
+
+    if (!selectedClient) return;
+
+    const trimmedClient = {
+      ...selectedClient,
+      name: selectedClient.name.trim(),
+      surname: selectedClient.surname.trim(),
+      businessName: selectedClient.businessName.trim(),
+      companyName: selectedClient.companyName.trim(),
+      vatNumber: selectedClient.vatNumber.trim(),
+      email: selectedClient.email.trim().toLowerCase(),
+      phone: selectedClient.phone.trim(),
+      address: selectedClient.address.trim(),
+      pec: selectedClient.pec.trim().toLowerCase(),
+      sedeLegale: selectedClient.sedeLegale.trim(),
+    };
+
+    let errors = [];
+
+    if (!trimmedClient.name) {
+      errors.push("name");
+      showErrorPopup("⚠️ Il nome è obbligatorio.");
+    }
+    if (!trimmedClient.surname) {
+      errors.push("surname");
+      showErrorPopup("⚠️ Il cognome è obbligatorio.");
+    }
+    if (!trimmedClient.businessName) {
+      errors.push("businessName");
+      showErrorPopup("⚠️ Il nome dell'attività è obbligatorio.");
+    }
+    if (!trimmedClient.email) {
+      errors.push("email");
+      showErrorPopup("⚠️ L'email è obbligatoria.");
+    } else if (!isValidEmail(trimmedClient.email)) {
+      errors.push("email");
+      showErrorPopup("⚠️ L'email inserita non è valida.");
+    }
+
+    if (!trimmedClient.phone) {
+      errors.push("phone");
+      showErrorPopup("⚠️ Il numero di telefono è obbligatorio.");
+    } else if (!isValidPhone(trimmedClient.phone)) {
+      errors.push("phone");
+      showErrorPopup("⚠️ Il numero di telefono deve contenere solo numeri e il simbolo +.");
+    }
+
+    if (!trimmedClient.pec) {
+      errors.push("pec");
+      showErrorPopup("⚠️ La PEC è obbligatoria.");
+    } else if (!isValidPEC(trimmedClient.pec)) {
+      errors.push("pec");
+      showErrorPopup("⚠️ La PEC inserita non è valida.");
+    }
+
+    if (trimmedClient.vatNumber && !isValidVAT(trimmedClient.vatNumber)) {
+      errors.push("vatNumber");
+      showErrorPopup("⚠️ La Partita IVA deve contenere esattamente 11 cifre numeriche.");
+    }
+
+    if (errors.length > 0) {
+      setErrorFields(errors);
+      return;
+    }
+
+    try {
+      // 🔹 **Controllo se l'email o la PEC esistono già (escludendo il cliente attuale)**
+      const clientsRef = collection(db, "clients");
+      const querySnapshot = await getDocs(clientsRef);
+
+      const existingClient = querySnapshot.docs.find(doc => {
+        const data = doc.data();
+        return (
+          (data.email.toLowerCase() === trimmedClient.email.toLowerCase() ||
+            (trimmedClient.pec && data.pec.toLowerCase() === trimmedClient.pec.toLowerCase())) &&
+          doc.id !== trimmedClient.id
+        );
+      });
+
+      if (existingClient) {
+        if (existingClient.data().email.toLowerCase() === trimmedClient.email.toLowerCase()) {
+          showErrorPopup("⚠️ L'email inserita è già in uso da un altro cliente.");
+        } else {
+          showErrorPopup("⚠️ La PEC inserita è già in uso da un altro cliente.");
+        }
+        return;
+      }
+
+      // ✅ Se tutto è ok, aggiorna il cliente
+      const clientRef = doc(db, "clients", trimmedClient.id);
+      await updateDoc(clientRef, { ...trimmedClient });
+
+      setClients(clients.map(client => client.id === trimmedClient.id ? trimmedClient : client));
+      setModalVisible(false);
+
+      showSuccessPopup("✅ Cliente modificato con successo!");
+    } catch (error) {
+      console.error("❌ Errore durante la modifica:", error);
+      showErrorPopup("⚠️ Si è verificato un errore durante la modifica. Riprova.");
+    }
+  };
+
+
+
+  ;
+
 
 
   const fetchClients = async (loadMore = false) => {
@@ -642,6 +643,156 @@ const ClientsScreen = () => {
         </View>
       )}
 
+      {/* Modale Aggiungi Cliente */}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <Modal visible={addModalVisible} animationType="fade" transparent={true}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>➕ Aggiungi Cliente</Text>
+
+              <TextInput
+                ref={nameInputRef} // Aggiunge il riferimento
+                style={[styles.input, errorFields.includes("name") && styles.inputError]}
+                placeholder="Nome"
+                value={newClient.name}
+                onChangeText={(text) => {
+                  setNewClient({ ...newClient, name: text });
+
+                  // Se l'utente corregge il campo, rimuove l'errore dalla lista
+                  setErrorFields((prev) => prev.filter((field) => field !== "name"));
+                }}
+                autoFocus={true} // Imposta l'auto-focus
+              />
+
+              <TextInput style={[styles.input, errorFields.includes("surname") && styles.inputError]} placeholder="Cognome" value={newClient.surname}
+                onChangeText={(text) => {
+                  setNewClient({ ...newClient, surname: text });
+
+                  // Se l'utente corregge il campo, rimuove l'errore dalla lista
+                  setErrorFields((prev) => prev.filter((field) => field !== "surname"));
+                }}
+              />
+              <TextInput style={[styles.input, errorFields.includes("businessName") && styles.inputError]} placeholder="Nome Attività" value={newClient.businessName}
+                onChangeText={(text) => {
+                  setNewClient({ ...newClient, businessName: text });
+
+                  // Se l'utente corregge il campo, rimuove l'errore dalla lista
+                  setErrorFields((prev) => prev.filter((field) => field !== "businessName"));
+                }}
+              />
+              <TextInput style={[styles.input, errorFields.includes("companyName") && styles.inputError]} placeholder="Ragione Sociale" value={newClient.companyName}
+                onChangeText={(text) => {
+                  setNewClient({ ...newClient, companyName: text });
+
+                  // Se l'utente corregge il campo, rimuove l'errore dalla lista
+                  setErrorFields((prev) => prev.filter((field) => field !== "companyName"));
+                }}
+              />
+              <TextInput style={[styles.input, errorFields.includes("vatNumber") && styles.inputError]} placeholder="P.IVA" value={newClient.vatNumber}
+                onChangeText={(text) => {
+                  setNewClient({ ...newClient, vatNumber: text });
+
+                  // Se l'utente corregge il campo, rimuove l'errore dalla lista
+                  setErrorFields((prev) => prev.filter((field) => field !== "vatNumber"));
+                }}
+              />
+              <TextInput
+                style={[styles.input, errorFields.includes("email") && styles.inputError]}
+                placeholder="Email"
+                value={newClient.email}
+                onChangeText={(text) => {
+                  setNewClient({ ...newClient, email: text });
+
+                  // Se l'utente corregge il campo, rimuove l'errore dalla lista
+                  setErrorFields((prev) => prev.filter((field) => field !== "email"));
+                }}
+                keyboardType="email-address" // Suggerisce la tastiera per le email
+                autoCapitalize="none" // Evita che la prima lettera sia maiuscola
+                onSubmitEditing={() => Keyboard.dismiss()} // Chiude la tastiera dopo l'inserimento
+                blurOnSubmit={true} // Il campo perde il focus dopo la conferma
+              />
+
+              <TextInput
+                style={[styles.input, errorFields.includes("phone") && styles.inputError]}
+                placeholder="Telefono"
+                value={newClient.phone}
+                onChangeText={(text) => {
+                  setNewClient({ ...newClient, phone: text });
+
+                  // Se l'utente corregge il campo, rimuove l'errore dalla lista
+                  setErrorFields((prev) => prev.filter((field) => field !== "phone"));
+                }}
+                keyboardType="phone-pad" // Suggerisce la tastiera per numeri di telefono
+                onSubmitEditing={() => Keyboard.dismiss()} // Chiude la tastiera dopo l'inserimento
+                blurOnSubmit={true} // Il campo perde il focus dopo la conferma
+              />
+              <TextInput style={[styles.input, errorFields.includes("address") && styles.inputError]} placeholder="Indirizzo" value={newClient.address}
+                onChangeText={(text) => {
+                  setNewClient({ ...newClient, address: text });
+
+                  // Se l'utente corregge il campo, rimuove l'errore dalla lista
+                  setErrorFields((prev) => prev.filter((field) => field !== "address"));
+                }}
+              />
+
+              <TextInput
+                style={[styles.input, errorFields.includes("pec") && styles.inputError]}
+                placeholder="PEC"
+                value={newClient.pec}
+                keyboardType="email-address"
+                onChangeText={(text) => {
+                  setNewClient({ ...newClient, pec: text });
+
+                  // Se l'utente corregge il campo, rimuove l'errore dalla lista
+                  setErrorFields((prev) => prev.filter((field) => field !== "pec"));
+                }}
+              />
+
+              <TextInput
+                style={[styles.input, errorFields.includes("sedeLegale") && styles.inputError]}
+                placeholder="Sede Legale"
+                value={newClient.sedeLegale}
+                onChangeText={(text) => {
+                  setNewClient({ ...newClient, sedeLegale: text });
+
+                  // Se l'utente corregge il campo, rimuove l'errore dalla lista
+                  setErrorFields((prev) => prev.filter((field) => field !== "sedeLegale"));
+                }}
+              />
+
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity style={styles.saveButton} onPress={handleAddClient}>
+                  <Text style={styles.buttonText}>💾 Salva</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setErrorFields([]); // Reset degli errori
+                    setNewClient({  // Reset dei campi
+                      name: "",
+                      surname: "",
+                      businessName: "",
+                      companyName: "",
+                      vatNumber: "",
+                      email: "",
+                      phone: "",
+                      address: "",
+                      pec: "",
+                      sedeLegale: ""
+                    });
+                    setAddModalVisible(false); // Chiude il modale
+                  }}
+                >
+                  <Text style={styles.buttonText}>❌ Annulla</Text>
+                </TouchableOpacity>
+
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </TouchableWithoutFeedback>
+
       {/* Modale Modifica Cliente */}
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <Modal visible={modalVisible} animationType="fade" transparent={true}>
@@ -651,30 +802,60 @@ const ClientsScreen = () => {
 
               <TextInput
                 ref={editNameInputRef} // Assegna il riferimento
-                style={styles.input}
+                style={[styles.input, errorFields.includes("name") && styles.inputError]}
                 placeholder="Nome"
                 value={selectedClient?.name}
-                onChangeText={(text) => setSelectedClient({ ...selectedClient, name: text })}
+                onChangeText={(text) => {
+                  setSelectedClient({ ...selectedClient, name: text });
+
+                  // Rimuove l'errore se l'utente corregge il campo
+                  setErrorFields((prev) => prev.filter((field) => field !== "name"));
+                }}
                 autoFocus={true}
               />
 
-              <TextInput style={styles.input} placeholder="Cognome" value={selectedClient?.surname}
-                onChangeText={(text) => setSelectedClient({ ...selectedClient, surname: text })}
+              <TextInput style={[styles.input, errorFields.includes("surname") && styles.inputError]} placeholder="Cognome" value={selectedClient?.surname}
+                onChangeText={(text) => {
+                  setSelectedClient({ ...selectedClient, surname: text });
+
+                  // Rimuove l'errore se l'utente corregge il campo
+                  setErrorFields((prev) => prev.filter((field) => field !== "surname"));
+                }}
               />
-              <TextInput style={styles.input} placeholder="Nome Attività" value={selectedClient?.businessName}
-                onChangeText={(text) => setSelectedClient({ ...selectedClient, businessName: text })}
+              <TextInput style={[styles.input, errorFields.includes("businessName") && styles.inputError]} placeholder="Nome Attività" value={selectedClient?.businessName}
+                onChangeText={(text) => {
+                  setSelectedClient({ ...selectedClient, businessName: text });
+
+                  // Rimuove l'errore se l'utente corregge il campo
+                  setErrorFields((prev) => prev.filter((field) => field !== "businessName"));
+                }}
               />
-              <TextInput style={styles.input} placeholder="Ragione Sociale" value={selectedClient?.companyName}
-                onChangeText={(text) => setSelectedClient({ ...selectedClient, companyName: text })}
+              <TextInput style={[styles.input, errorFields.includes("companyName") && styles.inputError]} placeholder="Ragione Sociale" value={selectedClient?.companyName}
+                onChangeText={(text) => {
+                  setSelectedClient({ ...selectedClient, companyName: text });
+
+                  // Rimuove l'errore se l'utente corregge il campo
+                  setErrorFields((prev) => prev.filter((field) => field !== "companyName"));
+                }}
               />
-              <TextInput style={styles.input} placeholder="P.IVA" value={selectedClient?.vatNumber}
-                onChangeText={(text) => setSelectedClient({ ...selectedClient, vatNumber: text })}
+              <TextInput style={[styles.input, errorFields.includes("vatNumber") && styles.inputError]} placeholder="P.IVA" value={selectedClient?.vatNumber}
+                onChangeText={(text) => {
+                  setSelectedClient({ ...selectedClient, vatNumber: text });
+
+                  // Rimuove l'errore se l'utente corregge il campo
+                  setErrorFields((prev) => prev.filter((field) => field !== "vatNumber"));
+                }}
               />
               <TextInput
-                style={styles.input}
+                style={[styles.input, errorFields.includes("email") && styles.inputError]}
                 placeholder="Email"
                 value={selectedClient?.email}
-                onChangeText={(text) => setSelectedClient({ ...selectedClient, email: text })}
+                onChangeText={(text) => {
+                  setSelectedClient({ ...selectedClient, email: text });
+
+                  // Rimuove l'errore se l'utente corregge il campo
+                  setErrorFields((prev) => prev.filter((field) => field !== "email"));
+                }}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 onSubmitEditing={() => Keyboard.dismiss()}
@@ -682,10 +863,15 @@ const ClientsScreen = () => {
               />
 
               <TextInput
-                style={styles.input}
+                style={[styles.input, errorFields.includes("phone") && styles.inputError]}
                 placeholder="Telefono"
                 value={selectedClient?.phone}
-                onChangeText={(text) => setSelectedClient({ ...selectedClient, phone: text })}
+                onChangeText={(text) => {
+                  setSelectedClient({ ...selectedClient, phone: text });
+
+                  // Rimuove l'errore se l'utente corregge il campo
+                  setErrorFields((prev) => prev.filter((field) => field !== "phone"));
+                }}
                 keyboardType="phone-pad"
                 onSubmitEditing={() => Keyboard.dismiss()}
                 blurOnSubmit={true}
@@ -695,18 +881,28 @@ const ClientsScreen = () => {
               />
 
               <TextInput
-                style={styles.input}
+                style={[styles.input, errorFields.includes("pec") && styles.inputError]}
                 placeholder="PEC"
                 value={selectedClient?.pec}
                 keyboardType="email-address"
-                onChangeText={(text) => setSelectedClient({ ...selectedClient, pec: text })}
+                onChangeText={(text) => {
+                  setSelectedClient({ ...selectedClient, pec: text });
+
+                  // Rimuove l'errore se l'utente corregge il campo
+                  setErrorFields((prev) => prev.filter((field) => field !== "pec"));
+                }}
               />
 
               <TextInput
-                style={styles.input}
+                style={[styles.input, errorFields.includes("sedeLegale") && styles.inputError]}
                 placeholder="Sede Legale"
                 value={selectedClient?.sedeLegale}
-                onChangeText={(text) => setSelectedClient({ ...selectedClient, sedeLegale: text })}
+                onChangeText={(text) => {
+                  setSelectedClient({ ...selectedClient, sedeLegale: text });
+
+                  // Rimuove l'errore se l'utente corregge il campo
+                  setErrorFields((prev) => prev.filter((field) => field !== "sedeLegale"));
+                }}
               />
 
 
@@ -714,7 +910,10 @@ const ClientsScreen = () => {
                 <TouchableOpacity style={styles.saveButton} onPress={handleSaveChanges}>
                   <Text style={styles.buttonText}>💾 Salva</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
+                <TouchableOpacity style={styles.cancelButton} onPress={() => {
+                  setErrorFields([]); // Reset degli errori
+                  setModalVisible(false);
+                }}>
                   <Text style={styles.buttonText}>❌ Annulla</Text>
                 </TouchableOpacity>
               </View>
@@ -747,106 +946,6 @@ const ClientsScreen = () => {
         </Modal>
       </TouchableWithoutFeedback>
 
-      {/* Modale Aggiungi Cliente */}
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <Modal visible={addModalVisible} animationType="fade" transparent={true}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>➕ Aggiungi Cliente</Text>
-
-              <TextInput
-                ref={nameInputRef} // Aggiunge il riferimento
-                style={styles.input}
-                placeholder="Nome"
-                value={newClient.name}
-                onChangeText={(text) => setNewClient({ ...newClient, name: text })}
-                autoFocus={true} // Imposta l'auto-focus
-              />
-
-              <TextInput style={styles.input} placeholder="Cognome" value={newClient.surname}
-                onChangeText={(text) => setNewClient({ ...newClient, surname: text })}
-              />
-              <TextInput style={styles.input} placeholder="Nome Attività" value={newClient.businessName}
-                onChangeText={(text) => setNewClient({ ...newClient, businessName: text })}
-              />
-              <TextInput style={styles.input} placeholder="Ragione Sociale" value={newClient.companyName}
-                onChangeText={(text) => setNewClient({ ...newClient, companyName: text })}
-              />
-              <TextInput style={styles.input} placeholder="P.IVA" value={newClient.vatNumber}
-                onChangeText={(text) => setNewClient({ ...newClient, vatNumber: text })}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={newClient.email}
-                onChangeText={(text) => setNewClient({ ...newClient, email: text })}
-                keyboardType="email-address" // Suggerisce la tastiera per le email
-                autoCapitalize="none" // Evita che la prima lettera sia maiuscola
-                onSubmitEditing={() => Keyboard.dismiss()} // Chiude la tastiera dopo l'inserimento
-                blurOnSubmit={true} // Il campo perde il focus dopo la conferma
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Telefono"
-                value={newClient.phone}
-                onChangeText={(text) => setNewClient({ ...newClient, phone: text })}
-                keyboardType="phone-pad" // Suggerisce la tastiera per numeri di telefono
-                onSubmitEditing={() => Keyboard.dismiss()} // Chiude la tastiera dopo l'inserimento
-                blurOnSubmit={true} // Il campo perde il focus dopo la conferma
-              />
-              <TextInput style={styles.input} placeholder="Indirizzo" value={newClient.address}
-                onChangeText={(text) => setNewClient({ ...newClient, address: text })}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="PEC"
-                value={newClient.pec}
-                keyboardType="email-address"
-                onChangeText={(text) => setNewClient({ ...newClient, pec: text })}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Sede Legale"
-                value={newClient.sedeLegale}
-                onChangeText={(text) => setNewClient({ ...newClient, sedeLegale: text })}
-              />
-
-
-              <View style={styles.modalButtons}>
-                <TouchableOpacity style={styles.saveButton} onPress={handleAddClient}>
-                  <Text style={styles.buttonText}>💾 Salva</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => {
-                    setNewClient({  // Reset dei campi
-                      name: "",
-                      surname: "",
-                      businessName: "",
-                      companyName: "",
-                      vatNumber: "",
-                      email: "",
-                      phone: "",
-                      address: "",
-                      pec: "",
-                      sedeLegale: ""
-                    });
-                    setAddModalVisible(false); // Chiude il modale
-                  }}
-                >
-                  <Text style={styles.buttonText}>❌ Annulla</Text>
-                </TouchableOpacity>
-
-              </View>
-            </View>
-          </View>
-        </Modal>
-      </TouchableWithoutFeedback>
-
-
       {/* Modale per mostrare gli errori */}
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <Modal visible={errorModalVisible} animationType="fade" transparent={true}>
@@ -862,7 +961,6 @@ const ClientsScreen = () => {
           </View>
         </Modal>
       </TouchableWithoutFeedback>
-
 
       {/* Modale per mostrare notifiche di successo */}
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -963,6 +1061,9 @@ const styles = StyleSheet.create({
     marginBottom: 8, // Meno spazio tra i campi
     fontSize: 14, // Ridotto da 16 a 14
     backgroundColor: "#fff"
+  },
+  inputError: {
+    borderColor: "#e74c3c", // ✅ Bordo rosso per i campi non validi
   },
 
   // Stili Modali (Popup)
