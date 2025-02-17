@@ -36,6 +36,7 @@ const ClientsScreen = () => {
   const [sortOrder, setSortOrder] = useState("asc"); // Ordine di default (ascendente)
   const [successMessage, setSuccessMessage] = useState("");
   const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [totalClients, setTotalClients] = useState(0); // Nuovo stato per il numero totale di clienti
   const scrollY = useRef(new Animated.Value(0)).current; // Tiene traccia dello scroll
   const [isHeaderVisible, setIsHeaderVisible] = useState(true); // Controlla la visibilità della barra filtri
   const headerTranslateY = scrollY.interpolate({
@@ -216,7 +217,6 @@ const ClientsScreen = () => {
     }
 
     try {
-      // 🔹 **Controllo se l'email o la PEC esistono già**
       const clientsRef = collection(db, "clients");
       const querySnapshot = await getDocs(clientsRef);
 
@@ -229,11 +229,17 @@ const ClientsScreen = () => {
       });
 
       if (existingClient) {
+        let newErrorFields = [...errorFields];
+
         if (existingClient.data().email.toLowerCase() === trimmedClient.email.toLowerCase()) {
-          showErrorPopup("⚠️ L'email inserita è già in uso da un altro cliente.");
+          showErrorPopup("❌ L'email inserita è già in uso da un altro cliente.");
+          if (!newErrorFields.includes("email")) newErrorFields.push("email");
         } else {
-          showErrorPopup("⚠️ La PEC inserita è già in uso da un altro cliente.");
+          showErrorPopup("❌ La PEC inserita è già in uso da un altro cliente.");
+          if (!newErrorFields.includes("pec")) newErrorFields.push("pec");
         }
+
+        setErrorFields(newErrorFields);
         return;
       }
 
@@ -332,7 +338,6 @@ const ClientsScreen = () => {
     }
 
     try {
-      // 🔹 **Controllo se l'email o la PEC esistono già (escludendo il cliente attuale)**
       const clientsRef = collection(db, "clients");
       const querySnapshot = await getDocs(clientsRef);
 
@@ -346,11 +351,17 @@ const ClientsScreen = () => {
       });
 
       if (existingClient) {
+        let newErrorFields = [...errorFields];
+
         if (existingClient.data().email.toLowerCase() === trimmedClient.email.toLowerCase()) {
-          showErrorPopup("⚠️ L'email inserita è già in uso da un altro cliente.");
+          showErrorPopup("❌ L'email inserita è già in uso da un altro cliente.");
+          if (!newErrorFields.includes("email")) newErrorFields.push("email");
         } else {
-          showErrorPopup("⚠️ La PEC inserita è già in uso da un altro cliente.");
+          showErrorPopup("❌ La PEC inserita è già in uso da un altro cliente.");
+          if (!newErrorFields.includes("pec")) newErrorFields.push("pec");
         }
+
+        setErrorFields(newErrorFields);
         return;
       }
 
@@ -393,6 +404,10 @@ const ClientsScreen = () => {
         // Primo caricamento della lista
         querySnapshot = await getDocs(query(queryRef, orderBy("createdAt", "desc"), limit(pageSize)));
       }
+
+      // 🔹 Recupera il numero totale di clienti all'inizio
+      const totalSnapshot = await getDocs(query(queryRef));
+      setTotalClients(totalSnapshot.size); // Imposta il numero totale clienti
 
       if (!querySnapshot.empty) {
         const clientList = querySnapshot.docs.map((doc) => ({
@@ -437,8 +452,8 @@ const ClientsScreen = () => {
     <View style={styles.container}>
       {/* ✅ HEADER SEMPRE VISIBILE: Titolo, Totale Clienti, Pulsante Aggiungi */}
       <View style={styles.fixedHeaderContainer}>
-        <Text style={styles.title}>📋 Clienti</Text>
-        <Text style={styles.clientCount}>Totale clienti: {clients.length}</Text>
+        <Text style={styles.title}>👥 Clienti</Text>
+        <Text style={styles.clientCount}>Totale clienti: {totalClients}</Text>
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => {
